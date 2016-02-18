@@ -376,8 +376,6 @@ func (srv *Server) BuildAndRun() error {
 
 	} else {
 		stat, err := os.Stat(srv.bin)
-		log.Printf("stat %v err %v", stat, err)
-
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -413,7 +411,7 @@ func (srv *Server) BuildAndRun() error {
 		}
 	}
 
-	log.Printf("\nREBUILD: %v | RESTART: %v\n", rebuild, restart)
+	log.Printf("REBUILD: %v | RESTART: %v\n", rebuild, restart)
 
 	if !restart {
 		return nil
@@ -468,6 +466,21 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	w.WriteHeader(response.StatusCode)
+	flusher, ok := w.(http.Flusher)
+	// Serve sent events don't play well with the default buffering behavior of
+	// io.Copy and non-flushed writes.
+	if strings.Contains(r.Header.Get("Accept"), "text/event-stream") && ok {
+		for {
+			if _, err := io.CopyN(w, response.Body, 32); err != nil {
+				if err == io.EOF {
+					return nil
+				}
+				return fmt.Errorf("%s\n%s", err.Error(), srv.Output(delim))
+			}
+			flusher.Flush()
+		}
+	}
+
 	if _, err := io.Copy(w, response.Body); err != nil {
 		return fmt.Errorf("%s\n%s", err.Error(), srv.Output(delim))
 	}
