@@ -81,6 +81,9 @@ func readdir(path string) ([]os.FileInfo, error) {
 
 func ModifiedSince(since time.Time, ignore *regexp.Regexp, files ...string) (bool, error) {
 	err := walkAll(files, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if ignore != nil && ignore.MatchString(info.Name()) {
 			if info.IsDir() {
 				return filepath.SkipDir
