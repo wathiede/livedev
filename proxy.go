@@ -25,6 +25,12 @@ func NewProxy(port int, servers map[string]*Server, defaultServer *Server) *Prox
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/livedevz" {
+		for h, s := range p.servers {
+			fmt.Fprintf(w, "%s: %#v\n", h, s)
+		}
+		return
+	}
 	host := r.Host
 	if h, _, err := net.SplitHostPort(r.Host); err == nil {
 		host = h
