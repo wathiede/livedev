@@ -16,6 +16,7 @@ const (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Printf("Livedev %s\n", version)
 
 	configFile := flag.String("c", "", "Configuration file")
