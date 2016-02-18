@@ -356,9 +356,11 @@ func (srv *Server) BuildAndRun() error {
 		srv.lock.Unlock()
 	}()
 
-	//Ignore if the request is within less than 3 seconds of the last one.
-	//This is an arbitrary number. We can certainly increase this.
-	if requestTime.Sub(srv.requestTime) < (3 * time.Second) {
+	// Ignore if the request is within less than 100 mills of the last one.
+	// Previous value of 3 seconds was long enough that:
+	// $ watch curl http://host/url
+	// Would prevent rebuild from ever happening.
+	if requestTime.Sub(srv.requestTime) < (100 * time.Millisecond) {
 		return nil
 	}
 
@@ -374,6 +376,7 @@ func (srv *Server) BuildAndRun() error {
 
 	} else {
 		stat, err := os.Stat(srv.bin)
+		log.Printf("stat %v err %v", stat, err)
 
 		if err != nil && !os.IsNotExist(err) {
 			return err
