@@ -445,6 +445,9 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if ip, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		if prior, ok := req.Header["X-Forwarded-For"]; ok {
+			ip = strings.Join(prior, ", ") + ", " + ip
+		}
 		req.Header.Set("X-Forwarded-For", ip)
 	}
 
